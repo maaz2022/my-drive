@@ -13,7 +13,7 @@ export default function Home() {
   if(organization.isLoaded && user.isLoaded){
     orgId= organization.organization?.id ?? user.user?.id;
   }
-console.log(orgId)
+
   const files = useQuery(api.files.getFiles, orgId ? { orgId} : 'skip');
  const createFile = useMutation(api.files.createFile);
   return (
