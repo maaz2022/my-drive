@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { SignInButton, useOrganization, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "../../../../convex/_generated/api";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -20,7 +20,8 @@ import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
-import { Doc } from "../../convex/_generated/dataModel";
+import { Doc } from "../../../../convex/_generated/dataModel";
+
 
 const formSchema = z.object({
   title: z.string().min(1).max(200),

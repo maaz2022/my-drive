@@ -1,17 +1,28 @@
 "use client"
 
-import { Button } from "@/components/ui/button";
 import { SignInButton, useOrganization, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import Image from "next/image";
+import { FileIcon, Loader2, Search, StarIcon } from "lucide-react";
+import { SearchBar } from "./search-bar";
+import { useState } from "react";
 import { UploadButton } from "./upload-button";
 import { FileCard } from "./file-card";
-import Image from "next/image";
-import { Loader2, Search } from "lucide-react";
-import { SearchBar } from "./SearchBar";
-import { useState } from "react";
+import { api } from "../../../../convex/_generated/api";
 
-export default function Home() {
+
+function Placeholder(){
+return(
+  <div className="flex flex-col gap-4 w-full items-center mt-12">
+  <Image alt="image" width="300" height="300" src="/empty.svg"/>
+  <div className="text-2xl">
+    You have no files, go upload one
+  </div>
+  <UploadButton/>
+</div>  
+)
+}
+export  function FileBrowser({title, favourites}: {title:string, favourites?:boolean  }) {
   const organization = useOrganization();
   const user = useUser();
   const[query, setQuery] = useState("");
@@ -21,14 +32,9 @@ export default function Home() {
   if (organization.isLoaded && user.isLoaded) {
     orgId = organization.organization?.id ?? user.user?.id;
   }
-  const files = useQuery(api.files.getFiles, orgId ? { orgId, query } : 'skip');
+  const files = useQuery(api.files.getFiles, orgId ? { orgId, query, favourites } : 'skip');
   const isLoading = files === undefined;
   return (
-    <main className="container mx-auto pt-12">
-      <div className="flex">
-      <div>
-        Testing
-      </div>
       <div>
       {isLoading && (
         <div className="flex flex-col gap-8 w-full items-center mt-24 text-gray-500">
@@ -36,20 +42,14 @@ export default function Home() {
           <div className="text-2xl">Loading your image...</div>
         </div>  
       )}
-      {!isLoading && files.length ===0 && (
-        <div className="flex flex-col gap-4 w-full items-center mt-12">
-          <Image alt="image" width="300" height="300" src="/empty.svg"/>
-          <div className="text-2xl">
-            You have no files, go upload one
-          </div>
-          <UploadButton/>
-        </div>
-      )}
+      {/* {!isLoading && !query && files.length === 0  && (
+        <Placeholder/>
+      )} */}
     
-      {!isLoading && files.length > 0 && (
+      {!isLoading && (
         <>
         <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold">Your Files</h1>
+            <h1 className="text-4xl font-bold">{title}</h1>
             <SearchBar query={query} setQuery={setQuery}/>
             <UploadButton/>
         </div>
@@ -62,10 +62,11 @@ export default function Home() {
              })}
              
         </div>
+        {files.length === 0  && (
+          <Placeholder/>
+      )}
           </>
       )}
     </div>
-  </div>
-    </main>
   );
 }

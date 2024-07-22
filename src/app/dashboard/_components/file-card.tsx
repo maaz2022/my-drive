@@ -28,19 +28,23 @@ import {
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
   
-import { Doc, Id } from "../../convex/_generated/dataModel"
+
 import { Button } from "@/components/ui/button"
-import { Delete, DeleteIcon, FileTextIcon, GanttChartIcon, ImageIcon, MoreVertical, TypeIcon } from "lucide-react"
+import { Delete, DeleteIcon, FileTextIcon, GanttChartIcon, ImageIcon, MoreVertical, StarIcon, TypeIcon } from "lucide-react"
 import { ReactNode, useState } from "react"
 import { useMutation } from "convex/react"
-import { api } from "../../convex/_generated/api"
+
 import { toast } from "@/components/ui/use-toast"
 import Image from "next/image"
+import { api } from "../../../../convex/_generated/api"
+import { Doc, Id } from "../../../../convex/_generated/dataModel"
+import { toggleFavourite } from "../../../../convex/files"
   
 
 function FileCardActions({file}: {file: Doc<"files">}){
     const deleteFile = useMutation(api.files.deleteFile);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const toggleFavourite = useMutation(api.files.toggleFavourite);
     return (
     <>
         <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
@@ -73,9 +77,19 @@ function FileCardActions({file}: {file: Doc<"files">}){
         <DropdownMenu>
         <DropdownMenuTrigger><MoreVertical/></DropdownMenuTrigger>
         <DropdownMenuContent>
+        <DropdownMenuItem 
+            onClick={() =>{
+                toggleFavourite({
+                    fileId: file._id,
+                });
+            }}
+            className="flex gap-1 items-center"><StarIcon className="w-4 h-4"/> Favourite
+            </DropdownMenuItem>
+            <DropdownMenuSeparator/>
             <DropdownMenuItem 
             onClick={() => setIsConfirmOpen(true)}
-            className="flex gap-1 text-red-600 items-center"><DeleteIcon className="w-4 h-4"/> Delete</DropdownMenuItem>
+            className="flex gap-1 text-red-600 items-center"><DeleteIcon className="w-4 h-4"/> Delete
+            </DropdownMenuItem>
         </DropdownMenuContent>
         </DropdownMenu>
     </>
