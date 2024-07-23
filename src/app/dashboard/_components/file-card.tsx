@@ -30,7 +30,7 @@ import {
   
 
 import { Button } from "@/components/ui/button"
-import { Delete, DeleteIcon, FileTextIcon, GanttChartIcon, ImageIcon, MoreVertical, StarHalf, StarIcon, TypeIcon } from "lucide-react"
+import { Delete, DeleteIcon, FileTextIcon, GanttChartIcon, ImageIcon, MoreVertical, StarHalf, StarIcon, TypeIcon, UndoIcon } from "lucide-react"
 import { ReactNode, useState } from "react"
 import { useMutation } from "convex/react"
 
@@ -39,10 +39,12 @@ import Image from "next/image"
 import { api } from "../../../../convex/_generated/api"
 import { Doc, Id } from "../../../../convex/_generated/dataModel"
 import { toggleFavourite } from "../../../../convex/files"
+import { Protect } from "@clerk/nextjs"
   
 
 function FileCardActions({file, isfavourited}: {file: Doc<"files">, isfavourited:boolean}){
     const deleteFile = useMutation(api.files.deleteFile);
+    const restoreFile = useMutation(api.files.restoreFile);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const toggleFavourite = useMutation(api.files.toggleFavourite);
     return (
@@ -65,8 +67,8 @@ function FileCardActions({file, isfavourited}: {file: Doc<"files">, isfavourited
                 });
                 toast({
                     variant: "default",
-                    title: "File has been Deleted",
-                    description: "Your file has now gone from the system"
+                    title: "File has been marked for deletion",
+                    description: "Your file has now gone in trash"
                   })
         }}
         >Continue</AlertDialogAction>
@@ -93,11 +95,31 @@ function FileCardActions({file, isfavourited}: {file: Doc<"files">, isfavourited
                  Favourite</div>
             } 
             </DropdownMenuItem>
-            <DropdownMenuSeparator/>
-            <DropdownMenuItem 
-            onClick={() => setIsConfirmOpen(true)}
-            className="flex gap-1 text-red-600 items-center"><DeleteIcon className="w-4 h-4"/> Delete
-            </DropdownMenuItem>
+            <Protect role="org:admin" fallback={<></>}>
+                <DropdownMenuSeparator/>
+                <DropdownMenuItem className="lex gap-1 items-center cursor-pointer"
+                onClick={() => {
+                    if(file.shouldDelete){
+                        restoreFile({
+                            fileId:file._id,
+                        })
+                    }else{
+                        setIsConfirmOpen(true)
+                    }
+                }}>
+                {file.shouldDelete ? 
+                    (
+                        <div className="flex gap-1 text-green-600 items-center"><UndoIcon className="w-4 h-4"/>
+                            Restore
+                        </div>
+                    ) : (
+                        <div className="flex gap-1 text-red-600 items-center"><DeleteIcon className="w-4 h-4"/>
+                             Delete
+                        </div>    
+                    )
+                }
+                </DropdownMenuItem>
+            </Protect>
         </DropdownMenuContent>
         </DropdownMenu>
     </>

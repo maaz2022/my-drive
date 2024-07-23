@@ -1,8 +1,9 @@
 'use client'
 
 import { Button } from "@/components/ui/button"
+import { SignInButton, SignOutButton } from "@clerk/nextjs"
 import clsx from "clsx"
-import { FileIcon, StarIcon } from "lucide-react"
+import { FileIcon, StarIcon, TrashIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -15,6 +16,9 @@ export function SideNav(){
         </Link>
         <Link href='/dashboard/favourites'>
         <Button variant={"link"} className={clsx("flex gap-2", {'text-blue-500' : pathname.includes("/dashboard/favourites")})}><StarIcon/>Favourites</Button>
+        </Link>
+        <Link href='/dashboard/trash'>
+        <Button variant={"link"} className={clsx("flex gap-2", {'text-blue-500' : pathname.includes("/dashboard/trash")})}><TrashIcon/>Trash</Button>
         </Link>
       </div>
     )

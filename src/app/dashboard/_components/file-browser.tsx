@@ -22,7 +22,7 @@ return(
 </div>  
 )
 }
-export  function FileBrowser({title, favouritesOnly}: {title:string, favouritesOnly?:boolean  }) {
+export  function FileBrowser({title, favouritesOnly, deletedOnly}: {title:string, favouritesOnly?:boolean , deletedOnly?:boolean }) {
   const organization = useOrganization();
   const user = useUser();
   const[query, setQuery] = useState("");
@@ -37,7 +37,7 @@ export  function FileBrowser({title, favouritesOnly}: {title:string, favouritesO
     orgId ? {orgId} : "skip"
   );
 
-  const files = useQuery(api.files.getFiles, orgId ? { orgId, query, favourites: favouritesOnly } : 'skip');
+  const files = useQuery(api.files.getFiles, orgId ? { orgId, query, favourites: favouritesOnly, deletedOnly } : 'skip');
   const isLoading = files === undefined;
   return (
       <div>
