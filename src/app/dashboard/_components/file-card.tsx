@@ -30,7 +30,7 @@ import {
   
 
 import { Button } from "@/components/ui/button"
-import { Delete, DeleteIcon, FileTextIcon, GanttChartIcon, ImageIcon, MoreVertical, StarIcon, TypeIcon } from "lucide-react"
+import { Delete, DeleteIcon, FileTextIcon, GanttChartIcon, ImageIcon, MoreVertical, StarHalf, StarIcon, TypeIcon } from "lucide-react"
 import { ReactNode, useState } from "react"
 import { useMutation } from "convex/react"
 
@@ -41,7 +41,7 @@ import { Doc, Id } from "../../../../convex/_generated/dataModel"
 import { toggleFavourite } from "../../../../convex/files"
   
 
-function FileCardActions({file}: {file: Doc<"files">}){
+function FileCardActions({file, isfavourited}: {file: Doc<"files">, isfavourited:boolean}){
     const deleteFile = useMutation(api.files.deleteFile);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const toggleFavourite = useMutation(api.files.toggleFavourite);
@@ -83,7 +83,15 @@ function FileCardActions({file}: {file: Doc<"files">}){
                     fileId: file._id,
                 });
             }}
-            className="flex gap-1 items-center"><StarIcon className="w-4 h-4"/> Favourite
+            className="flex gap-1 items-center cursor-pointer">
+                {isfavourited ? 
+                <div className="flex gap-1 items-center">
+                <StarHalf className="w-4 h-4"/>
+                Unfavourite  </div>  :
+                <div className="flex gap-1 items-center">
+                <StarIcon className="w-4 h-4"/>
+                 Favourite</div>
+            } 
             </DropdownMenuItem>
             <DropdownMenuSeparator/>
             <DropdownMenuItem 
@@ -95,11 +103,9 @@ function FileCardActions({file}: {file: Doc<"files">}){
     </>
     )
 }
-const iconTypes = {
-   image: <ImageIcon/>,
-    pdf: <FileTextIcon/>,
-    csv: <GanttChartIcon/>
-} as Record<Doc<"files"> ["type"], ReactNode>;
+
+
+
 
 function getFileUrl(fileId: Id<"_storage">): string{
     return `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${fileId}`;      
@@ -107,15 +113,23 @@ function getFileUrl(fileId: Id<"_storage">): string{
 
 
 
-export function FileCard({file}: {file: Doc<"files">}){
-    console.log(file.fileId);   
+export function FileCard({file, favourites}: {file: Doc<"files">, favourites: Doc<"favourites">[]}){
+    const iconTypes = {
+        image: <ImageIcon/>,
+         pdf: <FileTextIcon/>,
+         csv: <GanttChartIcon/>
+     } as Record<Doc<"files"> ["type"], ReactNode>;
+
+   
+        const isfavourited = favourites.some((favourite) => favourite.fileId ===file._id);
+    
     return (
         <Card>
             <CardHeader className="relative">
                  <CardTitle className="flex gap-3">
                  <div className="flex justify-center">{iconTypes[file.type]}</div>{" "}
                      {file.name}</CardTitle>
-                  <div className="absolute top-2 right-2"><FileCardActions file={file} /></div> 
+                  <div className="absolute top-2 right-2"><FileCardActions isfavourited = {isfavourited} file={file} /></div> 
             </CardHeader>
             <CardContent className="h-[200px] flex justify-center items-center">
                 {/* {file.type === "image" && (

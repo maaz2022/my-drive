@@ -22,7 +22,7 @@ return(
 </div>  
 )
 }
-export  function FileBrowser({title, favourites}: {title:string, favourites?:boolean  }) {
+export  function FileBrowser({title, favouritesOnly}: {title:string, favouritesOnly?:boolean  }) {
   const organization = useOrganization();
   const user = useUser();
   const[query, setQuery] = useState("");
@@ -32,7 +32,12 @@ export  function FileBrowser({title, favourites}: {title:string, favourites?:boo
   if (organization.isLoaded && user.isLoaded) {
     orgId = organization.organization?.id ?? user.user?.id;
   }
-  const files = useQuery(api.files.getFiles, orgId ? { orgId, query, favourites } : 'skip');
+
+  const favourites = useQuery(api.files.getAllFavorites, 
+    orgId ? {orgId} : "skip"
+  );
+
+  const files = useQuery(api.files.getFiles, orgId ? { orgId, query, favourites: favouritesOnly } : 'skip');
   const isLoading = files === undefined;
   return (
       <div>
@@ -57,7 +62,7 @@ export  function FileBrowser({title, favourites}: {title:string, favourites?:boo
         <div className="grid grid-cols-3 gap-4">
                 {files?.map((file) => {
              return (
-                <FileCard key={file._id} file={file}/>
+                <FileCard favourites = {favourites ?? []} key={file._id} file={file}/>
               ) 
              })}
              
@@ -65,7 +70,7 @@ export  function FileBrowser({title, favourites}: {title:string, favourites?:boo
         {files.length === 0  && (
           <Placeholder/>
       )}
-          </>
+          </> 
       )}
     </div>
   );
