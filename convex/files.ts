@@ -3,7 +3,6 @@
     import { internalMutation, mutation, MutationCtx, query, QueryCtx } from "./_generated/server"
     import { getUser } from "./users";
     import { fileTypes } from "./schema";
-    import { Organization } from "@clerk/clerk-sdk-node";
     import { Id } from "./_generated/dataModel";
 
 
@@ -57,7 +56,8 @@
                 name: args.name,
                 orgId: args.orgId,
                 fileId: args.fileId,
-                type: args.type
+                type: args.type,
+                userId: hasAccess.user._id
             })
         
         },

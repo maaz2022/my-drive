@@ -37,7 +37,7 @@ export  function FileBrowser({title, favouritesOnly, deletedOnly}: {title:string
     orgId ? {orgId} : "skip"
   );
 
-  const files = useQuery(api.files.getFiles, orgId ? { orgId, query, favourites: favouritesOnly, deletedOnly } : 'skip');
+  const files = useQuery(api.files.getFiles, orgId ? { orgId, query, favorites: favouritesOnly, deletedOnly } : 'skip');
   const isLoading = files === undefined;
   return (
       <div>

@@ -30,9 +30,9 @@ import {
   
 
 import { Button } from "@/components/ui/button"
-import { Delete, DeleteIcon, FileTextIcon, GanttChartIcon, ImageIcon, MoreVertical, StarHalf, StarIcon, TypeIcon, UndoIcon } from "lucide-react"
+import { Delete, DeleteIcon, FileIcon, FileTextIcon, GanttChartIcon, ImageIcon, MoreVertical, StarHalf, StarIcon, TypeIcon, UndoIcon } from "lucide-react"
 import { ReactNode, useState } from "react"
-import { useMutation } from "convex/react"
+import { useMutation, useQuery } from "convex/react"
 
 import { toast } from "@/components/ui/use-toast"
 import Image from "next/image"
@@ -40,6 +40,8 @@ import { api } from "../../../../convex/_generated/api"
 import { Doc, Id } from "../../../../convex/_generated/dataModel"
 import { toggleFavourite } from "../../../../convex/files"
 import { Protect } from "@clerk/nextjs"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { format, formatDistance, formatRelative, subDays } from 'date-fns'
   
 
 function FileCardActions({file, isfavourited}: {file: Doc<"files">, isfavourited:boolean}){
@@ -95,6 +97,16 @@ function FileCardActions({file, isfavourited}: {file: Doc<"files">, isfavourited
                  Favourite</div>
             } 
             </DropdownMenuItem>
+            <DropdownMenuSeparator/>
+            <DropdownMenuItem 
+                    onClick={()=>{
+                        window.open(getFileUrl(file.fileId), "_blank");
+                    }}
+            className="flex gap-1 items-center cursor-pointer">
+                <FileIcon className="w-4 h-4"/>Download
+            </DropdownMenuItem>
+
+
             <Protect role="org:admin" fallback={<></>}>
                 <DropdownMenuSeparator/>
                 <DropdownMenuItem className="lex gap-1 items-center cursor-pointer"
@@ -141,7 +153,9 @@ export function FileCard({file, favourites}: {file: Doc<"files">, favourites: Do
          pdf: <FileTextIcon/>,
          csv: <GanttChartIcon/>
      } as Record<Doc<"files"> ["type"], ReactNode>;
-
+    const userProfile = useQuery(api.users.getUserProfile,{
+        userId: file.userId,
+})
    
         const isfavourited = favourites.some((favourite) => favourite.fileId ===file._id);
     
@@ -149,7 +163,7 @@ export function FileCard({file, favourites}: {file: Doc<"files">, favourites: Do
         <Card>
             <CardHeader className="relative">
                  <CardTitle className="flex gap-3">
-                 <div className="flex justify-center">{iconTypes[file.type]}</div>{" "}
+                 <div className="flex justify-center text-base font-normal">{iconTypes[file.type]}</div>{" "}
                      {file.name}</CardTitle>
                   <div className="absolute top-2 right-2"><FileCardActions isfavourited = {isfavourited} file={file} /></div> 
             </CardHeader>
@@ -161,12 +175,15 @@ export function FileCard({file, favourites}: {file: Doc<"files">, favourites: Do
                 {file.type === "pdf" && <FileTextIcon className="w-20 h-20"/>}
                 {file.type === "image" && <ImageIcon className="w-20 h-20"/>}
              </CardContent>
-            <CardFooter>    
-                    <Button
-                    onClick={()=>{
-                        window.open(getFileUrl(file.fileId), "_blank");
-                    }}
-                    >Download</Button>
+            <CardFooter className="flex justify-between">    
+                <div className="flex gap-2 text-xs text-gray-500 w-40 items-center">
+            <Avatar className="w-6 h-6">
+                <AvatarImage src={userProfile?.image}/>
+                <AvatarFallback>CN</AvatarFallback>
+            </Avatar>
+            {userProfile?.name}
+            </div>
+           <div className="text-xs text-gray-700"> uploaded on {formatRelative((new Date(file._creationTime)), new Date())}</div>
             </CardFooter>
         </Card>
    
