@@ -35,13 +35,11 @@ import { ReactNode, useState } from "react"
 import { useMutation, useQuery } from "convex/react"
 
 import { toast } from "@/components/ui/use-toast"
-import Image from "next/image"
+
 import { api } from "../../../../convex/_generated/api"
 import { Doc, Id } from "../../../../convex/_generated/dataModel"
-import { toggleFavourite } from "../../../../convex/files"
 import { Protect } from "@clerk/nextjs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { format, formatDistance, formatRelative, subDays } from 'date-fns'
+
   
 
 export function FileCardActions({file, isfavourited}: {file: Doc<"files">, isfavourited:boolean}){
@@ -49,6 +47,7 @@ export function FileCardActions({file, isfavourited}: {file: Doc<"files">, isfav
     const restoreFile = useMutation(api.files.restoreFile);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const toggleFavourite = useMutation(api.files.toggleFavourite);
+    const me = useQuery(api.users.getMe);
     return (
     <>
         <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
@@ -107,7 +106,11 @@ export function FileCardActions({file, isfavourited}: {file: Doc<"files">, isfav
             </DropdownMenuItem>
 
 
-            <Protect role="org:admin" fallback={<></>}>
+            <Protect condition={(check) => {
+    return check({ role: "org:admin" }) || file.userId === me?._id;
+}}
+
+            fallback={<></>}>
                 <DropdownMenuSeparator/>
                 <DropdownMenuItem className="lex gap-1 items-center cursor-pointer"
                 onClick={() => {
@@ -142,7 +145,7 @@ export function FileCardActions({file, isfavourited}: {file: Doc<"files">, isfav
 
 
 export function getFileUrl(fileId: Id<"_storage">): string{
-    return `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${fileId}`;      
+    return `https://hearty-crocodile-183.convex.cloud/api/storage/${fileId}`;      
 }
 
 

@@ -3,7 +3,7 @@
     import { internalMutation, mutation, MutationCtx, query, QueryCtx } from "./_generated/server"
     import { getUser } from "./users";
     import { fileTypes } from "./schema";
-    import { Id } from "./_generated/dataModel";
+    import { Doc, Id } from "./_generated/dataModel";
 
 
 
@@ -66,43 +66,51 @@
 
     export const getFiles = query({
         args: {
-            orgId: v.string(),
-            query: v.optional(v.string()),
-            favourites: v.optional(v.boolean()),
-            deletedOnly: v.optional(v.boolean()),
+          orgId: v.string(),
+          query: v.optional(v.string()),
+          favourites: v.optional(v.boolean()),
+          deletedOnly: v.optional(v.boolean()),
+          type: v.optional(fileTypes),
         },
-
-        async handler(ctx, args){
-            const hasAccess = await hasAccessToOrg(ctx, args.orgId
-            )
-
-            if (!hasAccess) {
-                return [];
-            }
-
-            let files = await ctx.db.query("files")   
-            .withIndex("by_orgId", q=> q.eq('orgId', args.orgId)).collect();
-            const query = args.query;
-            if(query){
-                return (files).filter((file) => file.name.toLowerCase().includes(query.toLowerCase()));
-            } 
-            if(args.favourites){
-                const favourites = await ctx.db.query("favourites").withIndex("by_userId_fileId_orgId",(q) => q.eq("userId", hasAccess.user?._id).eq("orgId",args.orgId)).collect();
-                files = files.filter((file) => 
-                favourites.some((favourite)=> favourite.fileId === file._id));
-            }
-            if(args.deletedOnly){
-                files = files.filter((file) => file.shouldDelete);
-            }else{
-                files = files.filter((file) => !file.shouldDelete);
-
-            }
-            return files;
+        async handler(ctx, args) {
+          const hasAccess = await hasAccessToOrg(ctx, args.orgId);
+      
+          if (!hasAccess) {
+            return [];
+          }
+      
+          let files = await ctx.db.query("files")
+            .withIndex("by_orgId", q => q.eq('orgId', args.orgId))
+            .collect();
+          const query = args.query;
+          if (query) {
+            files = files.filter((file) => file.name.toLowerCase().includes(query.toLowerCase()));
+          }
+      
+          if (args.favourites) {
+            const favourites = await ctx.db.query("favourites")
+              .withIndex("by_userId_fileId_orgId", q => q.eq("userId", hasAccess.user?._id).eq("orgId", args.orgId))
+              .collect();
+            files = files.filter((file) => favourites.some((favourite) => favourite.fileId === file._id));
+          }
+      
+          if (args.deletedOnly) {
+            files = files.filter((file) => file.shouldDelete);
+          } else {
+            files = files.filter((file) => !file.shouldDelete);
+          }
+      
+          if (args.type) {
+            files = files.filter((file) => file.type === args.type);
+          }
+      
+          return files;
         },
-    });
+      });
+      
 
-    export const deleteAllFiles = internalMutation({
-        args: {     },
+      export const deleteAllFiles = internalMutation({
+        args: {},
         async handler(ctx) {
           const files = await ctx.db
             .query("files")
@@ -117,46 +125,49 @@
           );
         },
       });
-      
-    export const deleteFile = mutation({
-        args: {
-            fileId : v.id("files"),
-        },
-        async handler(ctx, args){
-            const identity = await ctx.auth.getUserIdentity();
-            const access = await hasAccessToFile(ctx, args.fileId)
-            if(!access){
-                throw new ConvexError("no access to file")
-            }
-            const isAdmin = access.user.orgIds.find((org)=> org.orgId === access.file.orgId) ?.role === "admin";
-            if(!isAdmin){
-                throw new ConvexError("You don't have any admin access to delete the file")
-            }
-            await ctx.db.patch(args.fileId,{
-                shouldDelete: true,
-            })
-        }
-    })
 
-    export const restoreFile = mutation({
-        args: {
-            fileId : v.id("files"),
-        },
-        async handler(ctx, args){
-            const identity = await ctx.auth.getUserIdentity();
-            const access = await hasAccessToFile(ctx, args.fileId)
-            if(!access){
-                throw new ConvexError("no access to file")
-            }
-            const isAdmin = access.user.orgIds.find((org)=> org.orgId === access.file.orgId) ?.role === "admin";
-            if(!isAdmin){
-                throw new ConvexError("You don't have any admin access to delete the file")
-            }
-            await ctx.db.patch(args.fileId,{
-                shouldDelete: false,
-            })
+      function assertCanDeleteFile(user: Doc<"users">, file: Doc<"files">) {
+        const canDelete =
+          file.userId === user._id ||
+          user.orgIds.find((org) => org.orgId === file.orgId)?.role === "admin";
+      
+        if (!canDelete) {
+          throw new ConvexError("you have no acces to delete this file");
         }
-    })
+      }
+      
+      export const deleteFile = mutation({
+        args: { fileId: v.id("files") },
+        async handler(ctx, args) {
+          const access = await hasAccessToFile(ctx, args.fileId);
+      
+          if (!access) {
+            throw new ConvexError("no access to file");
+          }
+      
+          assertCanDeleteFile(access.user, access.file);
+      
+          await ctx.db.patch(args.fileId, {
+            shouldDelete: true,
+          });
+        },
+      });
+      export const restoreFile = mutation({
+        args: { fileId: v.id("files") },
+        async handler(ctx, args) {
+          const access = await hasAccessToFile(ctx, args.fileId);
+      
+          if (!access) {
+            throw new ConvexError("no access to file");
+          }
+      
+          assertCanDeleteFile(access.user, access.file);
+      
+          await ctx.db.patch(args.fileId, {
+            shouldDelete: false,
+          });
+        },
+      });
 
     export const toggleFavourite = mutation({
         args: {

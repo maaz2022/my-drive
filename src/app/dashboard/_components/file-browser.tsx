@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Doc } from "../../../../convex/_generated/dataModel";
 
 
 function Placeholder(){
@@ -39,7 +40,7 @@ export  function FileBrowser({title, favouritesOnly, deletedOnly}: {title:string
   const user = useUser();
   const[query, setQuery] = useState("");
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
-  const[type,setType] = useState('all')
+  const[type,setType] = useState<Doc<"files">["type"] | 'all'>('all')
 
   let orgId: string | undefined;
   if (organization.isLoaded && user.isLoaded) {
@@ -50,7 +51,7 @@ export  function FileBrowser({title, favouritesOnly, deletedOnly}: {title:string
     orgId ? {orgId} : "skip"
   );
 
-  const files = useQuery(api.files.getFiles, orgId ? { orgId, query, favourites: favouritesOnly, deletedOnly } : 'skip');
+  const files = useQuery(api.files.getFiles, orgId ? { orgId, query, type: type === 'all' ? undefined : type ,favourites: favouritesOnly, deletedOnly } : 'skip');
   const isLoading = files === undefined;
   const modifiedFiles =
   files?.map((file) => ({
@@ -78,14 +79,15 @@ export  function FileBrowser({title, favouritesOnly, deletedOnly}: {title:string
             <TabsTrigger value="table"  className="flex gap-2 justify-center"><RowsIcon/> table</TabsTrigger>
         </TabsList>
         <div>
-        <Select value={type} onValueChange={setType}>
-            <SelectTrigger className="w-[180px]">
+        <Select value={type} onValueChange={(newType) => {setType(newType as any)}}>
+            <SelectTrigger className="w-[180px]" defaultValue={'All'}>
               <SelectValue/>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="light">Image</SelectItem>
-              <SelectItem value="dark">CSV</SelectItem>
-              <SelectItem value="system">PDF</SelectItem>
+            <SelectItem value="all">All</SelectItem>
+              <SelectItem value="image">image</SelectItem>
+              <SelectItem value="csv">csv</SelectItem>
+              <SelectItem value="pdf">pdf</SelectItem>
             </SelectContent>
           </Select>
 
