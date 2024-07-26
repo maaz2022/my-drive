@@ -46,8 +46,7 @@ export  function UploadButton() {
   const fileRef = form.register("file");
 
  async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    console.log(values.file);
+
     if (!orgId) 
       { 
         return; 
